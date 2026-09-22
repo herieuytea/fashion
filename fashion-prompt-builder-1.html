@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fashion Prompt Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,340;0,9..144,480;0,9..144,560;1,9..144,420&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    box-sizing: border-box;
+    --bg: #FAFAF7;
+    --panel: #EFEDE5;
+    --ink: #17160F;
+    --muted: #6E6C61;
+    --line: #DAD6C9;
+    --accent: #A9814B;
+    --accent-ink: #FAFAF7;
+    --danger: #8B4A3D;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --bg: #131210;
+      --panel: #1C1B17;
+      --ink: #F3F1E9;
+      --muted: #9A9686;
+      --line: #34322A;
+      --accent: #D7B27C;
+      --accent-ink: #131210;
+      --danger: #E2AA9C;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg: #131210;
+    --panel: #1C1B17;
+    --ink: #F3F1E9;
+    --muted: #9A9686;
+    --line: #34322A;
+    --accent: #D7B27C;
+    --accent-ink: #131210;
+    --danger: #E2AA9C;
+  }
+  html{ scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.5;
+  }
+  .page{
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 40px 20px 56px;
+  }
+  header.hero{
+    padding-bottom: 28px;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--line);
+  }
+  header.hero h1{
+    font-family: 'Fraunces', serif;
+    font-weight: 480;
+    font-size: clamp(28px, 6vw, 42px);
+    line-height: 1.08;
+    margin: 0 0 10px;
+    letter-spacing: -0.01em;
+  }
+  header.hero p{
+    margin: 0;
+    max-width: 46ch;
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  .layout{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  @media (min-width: 860px){
+    .layout{
+      grid-template-columns: 1.15fr 0.85fr;
+      align-items: start;
+    }
+    .preview-panel{
+      position: sticky;
+      top: 24px;
+    }
+  }
+
+  .field-group{
+    padding: 22px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .field-group:first-child{ padding-top: 0; }
+
+  .field-group h2{
+    font-family: 'Fraunces', serif;
+    font-weight: 480;
+    font-style: italic;
+    font-size: 18px;
+    margin: 0 0 4px;
+  }
+  .field-group .hint{
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 14px;
+  }
+
+  label.sub{
+    display:block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    margin: 14px 0 6px;
+  }
+  label.sub:first-of-type{ margin-top: 0; }
+
+  textarea, select, input[type="text"]{
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 14.5px;
+    padding: 10px 12px;
+    resize: vertical;
+  }
+  textarea:focus, select:focus, input:focus{
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .radio-row{
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .radio-row label{
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 14.5px;
+    cursor: pointer;
+  }
+  .radio-row input[type="radio"]{
+    accent-color: var(--accent);
+    width: 16px; height: 16px;
+  }
+
+  .check-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 10px 16px;
+  }
+  .check-grid label{
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .check-grid input[type="checkbox"]{
+    accent-color: var(--accent);
+    width: 16px; height: 16px;
+    margin-top: 1px;
+    flex-shrink: 0;
+  }
+
+  #bgStyleWrap[hidden], #bgStyleWrap{ transition: opacity .15s ease; }
+
+  .preview-panel{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 22px;
+  }
+  .preview-panel h2{
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 480;
+    font-size: 18px;
+    margin: 0 0 4px;
+  }
+  .preview-panel .hint{
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 14px;
+  }
+  #promptOutput{
+    width: 100%;
+    min-height: 220px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13.2px;
+    line-height: 1.55;
+    color: var(--ink);
+    resize: vertical;
+  }
+  .preview-actions{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 14px;
+  }
+  #copyBtn{
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: none;
+    border-radius: 3px;
+    padding: 11px 20px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #copyBtn:active{ transform: translateY(1px); }
+  #copyStatus{
+    font-size: 13px;
+    color: var(--muted);
+  }
+  #copyStatus.show{ color: var(--ink); }
+
+  #resetBtn{
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  footer{
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  footer .credit{
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  footer .meta{
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <h1>Fashion Image Prompt Builder</h1>
+    <p>Susun prompt untuk foto fashion bergaya minimalis dengan hasil akhir setara fotografer profesional. Isi setiap bagian di kiri — prompt di kanan tersusun otomatis dan siap disalin.</p>
+  </header>
+
+  <div class="layout">
+    <section class="form-panel">
+
+      <div class="field-group">
+        <h2>Detail utama</h2>
+        <p class="hint">Jelaskan subjek, busana, dan pose sedetail mungkin. Jika mengunggah foto rujukan busana (foto rujukan pertama), prompt akan otomatis menjaga keakuratannya.</p>
+        <textarea id="mainDetail" rows="4" placeholder="Contoh: wanita muda mengenakan blazer oversized warna krem dan celana wide-leg, berdiri santai menyamping dengan satu tangan di saku"></textarea>
+      </div>
+
+      <div class="field-group">
+        <h2>Model di foto</h2>
+        <p class="hint">Tentukan subjek yang mengenakan busana.</p>
+        <select id="modelType">
+          <option value="dikenakan oleh model manusia sungguhan dengan pose dan ekspresi natural" selected>Orang (model manusia)</option>
+          <option value="dikenakan oleh manekin full body tanpa detail wajah, warna kepala, badan, tangan, dan kaki seragam sama persis, hanya bentuk tubuh untuk menonjolkan busana">Manekin full body</option>
+          <option value="dikenakan oleh manekin dengan kepala tetap ada namun permukaan wajah polos dan datar tanpa fitur wajah (tidak ada mata, hidung, mulut), warna kepala, badan, tangan, dan kaki seragam sama persis, fokus sepenuhnya pada busana">Manekin wajah datar</option>
+        </select>
+        <label class="sub">Gaya busana</label>
+        <div class="radio-row">
+          <label><input type="radio" name="hijabMode" value="non" checked> Non-hijab</label>
+          <label><input type="radio" name="hijabMode" value="hijab"> Hijab</label>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <h2>Background</h2>
+        <p class="hint">Foto rujukan pertama untuk busana/subjek, foto rujukan kedua digunakan sebagai background. Atau tentukan gaya background sendiri.</p>
+        <div class="radio-row">
+          <label><input type="radio" name="bgMode" value="reference" checked> Sesuai foto rujukan kedua</label>
+          <label><input type="radio" name="bgMode" value="custom"> Pilih gaya background</label>
+        </div>
+        <div id="bgStyleWrap" hidden>
+          <label class="sub" for="bgStyle">Gaya background</label>
+          <select id="bgStyle">
+            <option value="studio putih minimalis dengan gradasi cahaya lembut">Studio putih minimalis</option>
+            <option value="dinding beton bertekstur bergaya industrial urban">Beton industrial urban</option>
+            <option value="taman hijau natural dengan cahaya matahari menyaring dedaunan">Taman / alam natural</option>
+            <option value="interior modern minimalis dengan furnitur simpel dan cahaya jendela">Interior modern minimalis</option>
+            <option value="latar warna solid pastel yang bersih dan rata">Warna solid pastel</option>
+            <option value="jalanan kota di malam hari dengan lampu neon lembut di latar">Jalanan kota malam hari</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <h2>Gaya kamera &amp; lensa</h2>
+        <p class="hint">Menentukan karakter optik dan rasa foto secara keseluruhan.</p>
+        <select id="cameraStyle">
+          <option value="difoto seperti editorial fashion film, warna hangat khas Kodak Portra 400, lensa 85mm f/1.8, depth of field dangkal">Editorial film (Kodak Portra 400, 85mm)</option>
+          <option value="difoto dengan kamera digital full-frame Canon EOS R5, lensa 50mm f/1.4, warna bersih dan tajam" selected>Digital clean (Canon EOS R5, 50mm)</option>
+          <option value="difoto dengan nuansa sinematik, lensa anamorphic, contrast tinggi, color grading teal-orange halus">Cinematic (anamorphic)</option>
+          <option value="gaya foto polaroid vintage, warna sedikit pudar, vignette lembut di tepi frame">Polaroid vintage</option>
+          <option value="difoto dengan medium format Hasselblad, detail sangat tinggi, warna natural dan lembut">Medium format (Hasselblad)</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <h2>Pencahayaan</h2>
+        <select id="lighting">
+          <option value="pencahayaan natural yang lembut dari jendela besar" selected>Cahaya alami lembut</option>
+          <option value="pencahayaan studio softbox merata dari dua arah">Studio softbox</option>
+          <option value="cahaya golden hour hangat dari samping">Golden hour</option>
+          <option value="pencahayaan dramatis dari satu sisi dengan bayangan tegas">Dramatic side light</option>
+          <option value="pencahayaan flat dan bersih tanpa bayangan keras, khas katalog">Flat clean lighting</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <h2>Komposisi &amp; framing</h2>
+        <select id="composition">
+          <option value="full body shot, model berdiri tegak di tengah frame" selected>Full body</option>
+          <option value="half body portrait, fokus pada bagian atas busana">Half body / potret</option>
+          <option value="close-up detail pada tekstur dan jahitan busana">Close-up detail busana</option>
+          <option value="framing mengikuti rule of thirds, ruang negatif di salah satu sisi">Rule of thirds</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <h2>Mood &amp; atmosfer</h2>
+        <select id="mood">
+          <option value="mood minimalis, tenang, dan clean" selected>Minimalis clean</option>
+          <option value="mood elegan dan mewah">Elegan</option>
+          <option value="mood editorial high fashion, ekspresif dan berkarakter">Editorial high fashion</option>
+          <option value="mood casual chic sehari-hari">Casual chic</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <h2>Penunjang kualitas akhir</h2>
+        <p class="hint">Pilih beberapa untuk meningkatkan detail dan realisme hasil akhir.</p>
+        <div class="check-grid" id="qualityGrid">
+          <label><input type="checkbox" value="fokus tajam ultra sharp" checked> Ultra sharp focus</label>
+          <label><input type="checkbox" value="depth of field dangkal dengan bokeh lembut" checked> Shallow depth of field</label>
+          <label><input type="checkbox" value="resolusi tinggi setara 8K"> Resolusi tinggi (8K)</label>
+          <label><input type="checkbox" value="color grading profesional ala majalah fashion" checked> Color grading profesional</label>
+          <label><input type="checkbox" value="tekstur kulit natural, bukan plastis"> Tekstur kulit natural</label>
+          <label><input type="checkbox" value="tekstur kain dan jahitan terlihat detail" checked> Tekstur kain detail</label>
+          <label><input type="checkbox" value="anatomi tubuh dan tangan proporsional serta akurat"> Anatomi akurat</label>
+          <label><input type="checkbox" value="komposisi seimbang khas fotografer profesional"> Komposisi profesional</label>
+        </div>
+      </div>
+
+      <div class="field-group" style="border-bottom:none;">
+        <h2>Negative prompt</h2>
+        <p class="hint">Hal-hal yang ingin dihindari dari hasil gambar. Bisa diedit bebas.</p>
+        <textarea id="negativePrompt" rows="3">blur, kualitas rendah, distorsi anatomi, jari tangan berlebih, watermark, teks, oversaturated, kulit terlihat plastis, wajah asimetris</textarea>
+      </div>
+
+      <button id="resetBtn" type="button">Atur ulang semua pilihan</button>
+
+    </section>
+
+    <aside class="preview-panel">
+      <h2>Prompt akhir</h2>
+      <p class="hint">Tersusun otomatis dari semua pilihan di kiri.</p>
+      <textarea id="promptOutput" readonly></textarea>
+      <div class="preview-actions">
+        <button id="copyBtn" type="button">Salin prompt</button>
+        <span id="copyStatus"></span>
+      </div>
+    </aside>
+  </div>
+
+  <footer>
+    <span class="meta">Fashion Image Prompt Builder</span>
+    <span class="credit">by heri_euy</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  const mainDetail = document.getElementById('mainDetail');
+  const modelType = document.getElementById('modelType');
+  const hijabRadios = document.querySelectorAll('input[name="hijabMode"]');
+  const bgRadios = document.querySelectorAll('input[name="bgMode"]');
+  const bgStyleWrap = document.getElementById('bgStyleWrap');
+  const bgStyle = document.getElementById('bgStyle');
+  const cameraStyle = document.getElementById('cameraStyle');
+  const lighting = document.getElementById('lighting');
+  const composition = document.getElementById('composition');
+  const mood = document.getElementById('mood');
+  const qualityGrid = document.getElementById('qualityGrid');
+  const negativePrompt = document.getElementById('negativePrompt');
+  const promptOutput = document.getElementById('promptOutput');
+  const copyBtn = document.getElementById('copyBtn');
+  const copyStatus = document.getElementById('copyStatus');
+  const resetBtn = document.getElementById('resetBtn');
+
+  function currentBgMode(){
+    return document.querySelector('input[name="bgMode"]:checked').value;
+  }
+
+  function buildPrompt(){
+    const parts = [];
+
+    const detail = mainDetail.value.trim();
+    parts.push(detail ? detail : 'subjek model fashion');
+    parts.push('pertahankan keakuratan busana sesuai foto rujukan pertama, termasuk warna, potongan, motif, dan tekstur kain, jangan mengubah desain aslinya');
+
+    parts.push(modelType.value);
+
+    const hijabMode = document.querySelector('input[name="hijabMode"]:checked').value;
+    if (hijabMode === 'hijab'){
+      parts.push('mengenakan hijab menutupi rambut dan leher secara rapi, dilengkapi manset menutupi pergelangan tangan, legging menutupi kaki, dan kaos dalam (inner) menutupi area leher/dada, seluruh aurat tertutup sempurna sesuai busana muslimah');
+    }
+
+    if (currentBgMode() === 'reference'){
+      parts.push('gunakan foto rujukan kedua sebagai background dan pertahankan keakuratannya secara utuh, termasuk elemen, warna, pencahayaan, dan suasana asli dari foto rujukan kedua tersebut, tanpa menambah atau mengubah elemen background');
+    } else {
+      parts.push('background ' + bgStyle.value);
+    }
+
+    parts.push(cameraStyle.value);
+    parts.push(lighting.value);
+    parts.push(composition.value);
+    parts.push(mood.value);
+
+    const checked = Array.from(qualityGrid.querySelectorAll('input[type="checkbox"]:checked')).map(c => c.value);
+    if (checked.length){
+      parts.push(checked.join(', '));
+    }
+
+    let prompt = parts.filter(Boolean).join(', ') + '.';
+
+    const neg = negativePrompt.value.trim();
+    if (neg){
+      prompt += '\n\nNegative prompt: ' + neg;
+    }
+
+    promptOutput.value = prompt;
+  }
+
+  function toggleBgStyle(){
+    bgStyleWrap.hidden = currentBgMode() !== 'custom';
+  }
+
+  [mainDetail, modelType, bgStyle, cameraStyle, lighting, composition, mood, negativePrompt].forEach(el => {
+    el.addEventListener('input', buildPrompt);
+  });
+  bgRadios.forEach(r => r.addEventListener('change', () => { toggleBgStyle(); buildPrompt(); }));
+  hijabRadios.forEach(r => r.addEventListener('change', buildPrompt));
+  qualityGrid.querySelectorAll('input[type="checkbox"]').forEach(c => c.addEventListener('change', buildPrompt));
+
+  copyBtn.addEventListener('click', async () => {
+    try{
+      await navigator.clipboard.writeText(promptOutput.value);
+      copyStatus.textContent = 'Prompt disalin';
+    }catch(e){
+      try{
+        promptOutput.removeAttribute('readonly');
+        promptOutput.select();
+        document.execCommand('copy');
+        promptOutput.setAttribute('readonly', 'true');
+        copyStatus.textContent = 'Prompt disalin';
+      }catch(e2){
+        copyStatus.textContent = 'Gagal menyalin, salin manual';
+      }
+    }
+    copyStatus.classList.add('show');
+    setTimeout(() => copyStatus.classList.remove('show'), 2200);
+  });
+
+  resetBtn.addEventListener('click', () => {
+    mainDetail.value = '';
+    modelType.selectedIndex = 0;
+    document.querySelector('input[name="hijabMode"][value="non"]').checked = true;
+    document.querySelector('input[name="bgMode"][value="reference"]').checked = true;
+    bgStyle.selectedIndex = 0;
+    cameraStyle.selectedIndex = 1;
+    lighting.selectedIndex = 0;
+    composition.selectedIndex = 0;
+    mood.selectedIndex = 0;
+    qualityGrid.querySelectorAll('input[type="checkbox"]').forEach((c, i) => {
+      c.checked = [0,1,3,5].includes(i);
+    });
+    negativePrompt.value = 'blur, kualitas rendah, distorsi anatomi, jari tangan berlebih, watermark, teks, oversaturated, kulit terlihat plastis, wajah asimetris';
+    toggleBgStyle();
+    buildPrompt();
+  });
+
+  toggleBgStyle();
+  buildPrompt();
+})();
+</script>
+</body>
+</html>
